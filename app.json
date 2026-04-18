@@ -27,6 +27,14 @@
       "expo-sqlite",
       "expo-asset"
     ],
-    "scheme": "memo"
+    "scheme": "memo",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "47d48cd5-34f7-4aa9-9971-911de1e4be96"
+      }
+    }
   }
 }
