@@ -51,7 +51,7 @@ export default function HomeScreen() {
 
       <View style={styles.filterRow}>
         <CategoryChip
-          category={'all' as any}
+          category="all"
           selected={selectedCategory === 'all'}
           onPress={handleCategoryPress}
         />
@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFF',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E0E0E0',
   },

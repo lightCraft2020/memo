@@ -71,24 +71,46 @@ function iconPixel(x, y, w, h) {
     return [98, 0, 238, alpha];
   }
 
-  const letterScale = w / 1024;
-  const strokeWidth = 80 * letterScale;
-
-  const leftX = cx - 160 * letterScale;
-  const midX = cx;
-  const rightX = cx + 160 * letterScale;
-  const topY = cy - 200 * letterScale;
-  const bottomY = cy + 200 * letterScale;
+  const s = w / 1024;
+  const sw = 72 * s;
+  const padX = 260 * s;
+  const padY = 220 * s;
+  const left = cx - padX;
+  const right = cx + padX;
+  const top = cy - padY;
+  const bottom = cy + padY;
+  const midY = cy + 40 * s;
+  const notchBottom = cy + 60 * s;
 
   const inStroke = (
-    isInLine(x, y, leftX, topY, midX, bottomY, strokeWidth) ||
-    isInLine(x, y, rightX, topY, midX, bottomY, strokeWidth) ||
-    isInLine(x, y, leftX, topY, rightX, topY, strokeWidth)
+    isInRect(x, y, left, top, sw, bottom - top) ||
+    isInRect(x, y, right - sw, top, sw, bottom - top) ||
+    isInTriangle(x, y, left + sw, top, left + padX, notchBottom, sw) ||
+    isInTriangle(x, y, right - sw, top, right - padX, notchBottom, sw) ||
+    isInRect(x, y, cx - sw / 2, notchBottom, sw, bottom - notchBottom)
   );
 
   if (inStroke) return [255, 255, 255, 255];
 
   return [98, 0, 238, 255];
+}
+
+function isInRect(px, py, rx, ry, rw, rh) {
+  return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
+}
+
+function isInTriangle(px, py, x1, y1, x2, y2, halfW) {
+  const ddx = x2 - x1;
+  const ddy = y2 - y1;
+  const len = Math.sqrt(ddx * ddx + ddy * ddy);
+  if (len === 0) return false;
+  const nx = -ddy / len;
+  const ny = ddx / len;
+  const apx = px - x1;
+  const apy = py - y1;
+  const proj = apx * ddx / len + apy * ddy / len;
+  const perp = Math.abs(apx * nx + apy * ny);
+  return proj >= 0 && proj <= len && perp <= halfW;
 }
 
 function isInLine(px, py, x1, y1, x2, y2, halfWidth) {
