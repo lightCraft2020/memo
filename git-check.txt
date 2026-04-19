@@ -1,0 +1,10 @@
+STATUS:
+?? git-check-runner.js
+?? git-commit.js
+?? gl2.txt
+
+
+LOG:
+50b6d48 Add expo-font and fix EAS build config
+566cba4 图片
+6ab14ff Initial commit
