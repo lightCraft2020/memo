@@ -2,28 +2,30 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-function createPNG(width, height, r, g, b) {
+function createPNG(width, height, pixelGenerator) {
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(width, 0);
   ihdrData.writeUInt32BE(height, 4);
   ihdrData[8] = 8;
-  ihdrData[9] = 2;
+  ihdrData[9] = 6;
   ihdrData[10] = 0;
   ihdrData[11] = 0;
   ihdrData[12] = 0;
   const ihdr = makeChunk('IHDR', ihdrData);
 
-  const rawData = Buffer.alloc(height * (1 + width * 3));
+  const rawData = Buffer.alloc(height * (1 + width * 4));
   for (let y = 0; y < height; y++) {
-    const offset = y * (1 + width * 3);
+    const offset = y * (1 + width * 4);
     rawData[offset] = 0;
     for (let x = 0; x < width; x++) {
-      const px = offset + 1 + x * 3;
+      const px = offset + 1 + x * 4;
+      const [r, g, b, a] = pixelGenerator(x, y, width, height);
       rawData[px] = r;
       rawData[px + 1] = g;
       rawData[px + 2] = b;
+      rawData[px + 3] = a;
     }
   }
   const compressed = zlib.deflateSync(rawData);
@@ -55,11 +57,69 @@ function crc32(buf) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
+function iconPixel(x, y, w, h) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = w * 0.42;
+  const dx = x - cx;
+  const dy = y - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist > r + 2) return [0, 0, 0, 0];
+  if (dist > r) {
+    const alpha = Math.max(0, Math.round(255 * (1 - (dist - r) / 2)));
+    return [98, 0, 238, alpha];
+  }
+
+  const letterScale = w / 1024;
+  const strokeWidth = 80 * letterScale;
+
+  const leftX = cx - 160 * letterScale;
+  const midX = cx;
+  const rightX = cx + 160 * letterScale;
+  const topY = cy - 200 * letterScale;
+  const bottomY = cy + 200 * letterScale;
+
+  const inStroke = (
+    isInLine(x, y, leftX, topY, midX, bottomY, strokeWidth) ||
+    isInLine(x, y, rightX, topY, midX, bottomY, strokeWidth) ||
+    isInLine(x, y, leftX, topY, rightX, topY, strokeWidth)
+  );
+
+  if (inStroke) return [255, 255, 255, 255];
+
+  return [98, 0, 238, 255];
+}
+
+function isInLine(px, py, x1, y1, x2, y2, halfWidth) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0) return false;
+
+  const nx = -dy / len;
+  const ny = dx / len;
+
+  const apx = px - x1;
+  const apy = py - y1;
+
+  const proj = apx * dx / len + apy * dy / len;
+  const perp = Math.abs(apx * nx + apy * ny);
+
+  if (proj < -halfWidth || proj > len + halfWidth) return false;
+  if (perp > halfWidth) return false;
+
+  return true;
+}
+
+function splashPixel(x, y, w, h) {
+  return [98, 0, 238, 255];
+}
+
 const assetsDir = path.join(__dirname, 'assets');
-if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
 
-fs.writeFileSync(path.join(assetsDir, 'icon.png'), createPNG(1024, 1024, 98, 0, 238));
-fs.writeFileSync(path.join(assetsDir, 'adaptive-icon.png'), createPNG(1024, 1024, 98, 0, 238));
-fs.writeFileSync(path.join(assetsDir, 'splash.png'), createPNG(1242, 2436, 98, 0, 238));
+fs.writeFileSync(path.join(assetsDir, 'icon.png'), createPNG(1024, 1024, iconPixel));
+fs.writeFileSync(path.join(assetsDir, 'adaptive-icon.png'), createPNG(1024, 1024, iconPixel));
+fs.writeFileSync(path.join(assetsDir, 'splash.png'), createPNG(1242, 2436, splashPixel));
 
-console.log('Assets generated successfully!');
+console.log('App icons generated successfully!');

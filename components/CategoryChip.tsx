@@ -3,14 +3,17 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { CATEGORY_LABELS, CATEGORY_COLORS, type Category } from '../constants/theme';
 
 interface CategoryChipProps {
-  category: Category;
+  category: Category | 'all';
   selected: boolean;
-  onPress: (category: Category) => void;
+  onPress: (category: Category | 'all') => void;
 }
 
+const ALL_COLOR = '#6200EE';
+
 export default function CategoryChip({ category, selected, onPress }: CategoryChipProps) {
-  const color = CATEGORY_COLORS[category];
-  const label = CATEGORY_LABELS[category];
+  const isAll = category === 'all';
+  const color = isAll ? ALL_COLOR : CATEGORY_COLORS[category as Category];
+  const label = isAll ? '全部' : CATEGORY_LABELS[category as Category];
 
   return (
     <TouchableOpacity

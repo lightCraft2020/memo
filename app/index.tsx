@@ -15,12 +15,14 @@ export default function HomeScreen() {
   const theme = useTheme();
   const { memos, filter, loading, loadMemos, setFilter, clearFilter, removeMemo, toggleStatus } = useMemoStore();
 
+  const selectedCategory = filter.category ?? 'all';
+
   useEffect(() => {
     loadMemos();
   }, []);
 
-  const handleCategoryPress = useCallback((category: Category) => {
-    if (filter.category === category) {
+  const handleCategoryPress = useCallback((category: Category | 'all') => {
+    if (category === 'all') {
       clearFilter();
     } else {
       setFilter({ ...filter, category });
@@ -49,25 +51,18 @@ export default function HomeScreen() {
 
       <View style={styles.filterRow}>
         <CategoryChip
-          category={CATEGORY.IDEA}
-          selected={filter.category === CATEGORY.IDEA}
+          category={'all' as any}
+          selected={selectedCategory === 'all'}
           onPress={handleCategoryPress}
         />
-        <CategoryChip
-          category={CATEGORY.PLAN}
-          selected={filter.category === CATEGORY.PLAN}
-          onPress={handleCategoryPress}
-        />
-        <CategoryChip
-          category={CATEGORY.TODO}
-          selected={filter.category === CATEGORY.TODO}
-          onPress={handleCategoryPress}
-        />
-        <CategoryChip
-          category={CATEGORY.NOTE}
-          selected={filter.category === CATEGORY.NOTE}
-          onPress={handleCategoryPress}
-        />
+        {CATEGORIES.map((cat) => (
+          <CategoryChip
+            key={cat}
+            category={cat}
+            selected={selectedCategory === cat}
+            onPress={handleCategoryPress}
+          />
+        ))}
       </View>
 
       <FlatList
